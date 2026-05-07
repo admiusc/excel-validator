@@ -72,6 +72,12 @@ const DATE_COMPONENT_SUBS = /^(d[ií]a|mes|a[ñn]o|lugar|hora|semana|bimestre|tr
 // Sub-headers that are document type classifiers (not the actual ID number)
 const DOC_TYPE_SUBS = /^(tipo|clase|modalidad|categor[ií]a)$/i;
 
+// Headers that classify a TYPE / CLASS / CATEGORY rather than carry the data itself.
+// e.g. "Tipo de Documento" → classifier (T.I., C.C., Permiso…), NOT a cédula number.
+//      "Tipo de Vivienda", "Clase de…", "Modalidad de…" → same idea.
+// Headers like "Documento de Identidad" or "Número de Documento" are NOT matched by this.
+const TYPE_CLASSIFIER_HEADER = /^(tipo|clase|modalidad|categor[ií]a)\b/i;
+
 /**
  * Count how many strings in the array match at least one known column-name pattern.
  * Used by excelParser to score candidate header rows.
@@ -103,6 +109,10 @@ function detectColumnsWithSubHeaders(mainHeaders, subHeaders) {
     // as main), still skip — values like "Día" or "Mes" must never be validated as anything.
     if (DATE_COMPONENT_SUBS.test(headerTrim)) return;
     if (DOC_TYPE_SUBS.test(headerTrim)) return;
+
+    // Skip "Tipo de Documento", "Clase de Vivienda", etc. — these are classifier columns
+    // whose values are short labels (T.I., C.C., Permiso de Residencia…), not data to validate.
+    if (TYPE_CLASSIFIER_HEADER.test(headerTrim)) return;
 
     const testStr = subTrim ? `${headerTrim} - ${subTrim}` : headerTrim;
 
